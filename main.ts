@@ -288,6 +288,13 @@ export default class AutoPropertyPlugin extends Plugin {
 				const { startDelim, endDelim, inclusive, multiline } = boundaries
 				if (!startDelim) return null
 				const matches: string[] = []
+				// When retaining delimiters, ![[ → [[ so the result is a clickable link, not an embed.
+				// Also strip pure size aliases (|500 or |500x300) from image embeds — they break links.
+				const fixEmbed = (s: string) => {
+					if (startDelim !== '![[') return s
+					let r = inclusive ? s.replace(/^!/, '') : s
+					return r.replace(/\|\d+(x\d+)?(?=\]|$)/i, '')
+				}
 
 				if (multiline) {
 					const full = lines.join('\n')
@@ -297,7 +304,7 @@ export default class AutoPropertyPlugin extends Plugin {
 						'gs'
 					)
 					for (const m of full.matchAll(pattern)) {
-						matches.push(inclusive ? m[0] : m[1])
+						matches.push(fixEmbed(inclusive ? m[0] : m[1]))
 					}
 				} else {
 					for (const line of lines) {
@@ -308,10 +315,10 @@ export default class AutoPropertyPlugin extends Plugin {
 							const contentStart = start + startDelim.length
 							const end = line.indexOf(endDelim, contentStart)
 							if (end === -1) break
-							matches.push(inclusive
+							matches.push(fixEmbed(inclusive
 								? line.slice(start, end + endDelim.length)
 								: line.slice(contentStart, end)
-							)
+							))
 							searchFrom = end + endDelim.length
 						}
 					}

@@ -1,110 +1,115 @@
-# Auto-properties Plugin
+# Auto-Properties
 
-> [!TIP] 
-> **TL;DR** - Create auto-updating properties based on rules
+An [Obsidian](https://obsidian.md) plugin that automatically fills note frontmatter properties using configurable rules. Pairs well with Bases, Templates, and Dataview.
 
-This is an [Obsidian](https://obsidian.md) plugin which creates automatically-updating note properties based on user-defined rules. This pairs nicely with bases and templates.
+> See the [wiki](https://github.com/aarongilly/obsidian-auto-properties/wiki) for examples and full documentation.
 
-# [👉 Demo Video 👈](https://www.youtube.com/watch?v=IPDsfYfXp4Y)
+---
 
-## Example
+## How it works
 
-![](assets/example-file.png)
+You define rules in the plugin settings. Each rule watches note content and writes a value to a frontmatter property when its trigger fires. Note bodies are **never modified** — only frontmatter properties are written.
 
-## Overview
+---
 
-This plugin updates frontmatter of your notes using rules that act on their body (content).
+## Rule types
 
-![overview](assets/overview.png)
+### Lines
+Pulls lines that match a pattern. Match modes: **Starting with**, **Ending with**, **Containing**, **Regex**.
 
-# Use
+Options: pull first / all / count of matching lines, omit the search string from the result, ignore indentation, pull the next line instead of the matched one, case sensitive.
 
-## How
-1. Install & enable plugin - open `Auto-Property` settings
-2. Decide how often you want the auto-properties to update
+### Between
+Pulls content found between two delimiter strings (e.g. `==highlighted==`, `[[`, `![[`).
 
-![top-level-settings](assets/top-settings.png)
+Options: separate start and end delimiters, retain delimiters in result, multiline matching, pull first / all / count of matches, case sensitive.
 
-3. Create your first auto-property & configure its rule criteria.
-   
-![rule](assets/example-rule.png)
+### Headings
+Pulls content from under a heading, targeted by level (1–6) or heading text.
 
-4. Add your property's key to your notes
-5. Done! Your notes willl then update the property values automatically however often you've configured
+Options: heading text only or full section content, include the heading line itself, include subheadings.
 
-### Rule Criteria
+### Callouts
+Pulls content from callouts, optionally filtered by callout type.
 
-- **Key** - the property name the rule will be applied to in your notes
-- **Custom Rule** - end up being readable sentences that say what the rule does:
+Options: extract header, body, or both; include type label.
 
-| Rule Part 1                                                | Rule Part 2                                                          | Rule Part 3                         |
-| ---------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------- |
-| - Pull first line<br>- Pull all lines<br>- Count all lines | - Starting with<br>- Containing<br>- Ending with<br>- Matching regex | (whatever search string you want) |
+### File
+Pulls file metadata: name, full path, folder, extension, created date, modified date, or file size.
 
-- **Modifiers** - change how rules apply or are shown
-	- *Ignore whitespace* - whether or not "starts with" should care about indention
-	- *Omit search string from result text* - allows you to not include whatever text you are using in the text input field of the rule
-	- *Case sensitive* - whether or not "THIS" is the same as "tHiS"
-- **Pre-built Rules** - there are a few other types of rules you can use that are self-explanatory
-  - Creation date
-  - Modification date
-  - Character count
-- **Enabled** - you can toggle rules on/off without deleting them
+---
 
-## Trigger Modes
+## Triggers (per rule)
 
-### On Update
+Each rule independently controls when it runs:
 
-After a brief pause in typing, auto-properties will update (if changess are needed). This makes **undo** mildly tedious to use, however. It's not my preferred method. 
+| Trigger | When |
+|---|---|
+| **Modify** | Shortly after the note content changes |
+| **Open** | Once when the note is first opened |
+| **Focus** | When you navigate away from the note |
 
-### On File Focus Change
+Rules with no triggers enabled are effectively manual-only — run them via the command palette (`Auto-Properties: Update Auto-Properties`).
 
-When switching between or closing tabs, the note from the tab you just left will be processed and its proerties updated. This is how I use it, personally. 
+---
 
-### Manually
+## Behaviors
 
-Will only update properties when you run the `Auto-properties: Update Auto-properties` command.
+| Option | Effect |
+|---|---|
+| **Enabled** | Toggle a rule on/off without deleting it |
+| **Auto-add** | Creates the property in frontmatter if it doesn't exist yet |
+| **No overwrite** | Skips the rule if the property already has a non-empty value |
 
-## Use Cases
+---
 
-My use case was based on pulling the first open task into a property... but you can do much more.
+## Output & Filters
 
-- All open tasks
-- First open task
-- First task with status
-- First line with tag (or any given text)
-- All lines with whatever text
-- First embeded image
+These apply to the pulled value before it's written:
 
-# Design Considerations
+| Option | Effect |
+|---|---|
+| **Pull** | First match, all matches (as a list), or count of matches |
+| **Strip markdown** | Removes markdown formatting from the result |
+| **Trim whitespace** | Strips leading/trailing whitespace |
+| **Value format** | Template string wrapping the result, e.g. `https://example.com/${result}` |
 
-## Do *one* thing
+Available format variables: `${result}`, `${filename}`, `${folder}`, `${path}`, `${created}`, `${modified}`.
 
-This plugin is intentionally *small*. It does one thing. No unncessary overhead. Maximum modularity.
+---
 
-## You specify the keys & rules
+## Scope (per rule)
 
-You have control over the keys (property names) you do and don't want to have rules for. You control what the rules do.
+Each rule can be limited to run only in certain folders, or skipped in others:
 
-## Note bodies are never changed
+- **Run in folders** — only process notes whose path starts with one of these
+- **Ignore folders** — skip notes whose path starts with one of these
 
-For safety, this plugin **only updates note properties**. It will never modify the body of the note. This prevents accidental data loss. 
+Ignore wins if both match. Leave both empty to run on all notes.
 
-## Few "smart" touches
+---
 
-The plugin tries to do as little "magic under the hood" stuff as possible - but *does* do a couple of things to work better with how Obsidian works.
+## Import / Export
 
-- targeting embeds (via search string `![[`) will convert to a clickable link
-- targeting blocks that have a block ID will convert to a clickable link to that block
-  - i.e. it will make links for blocks ending with a space, carrot, and some text ^likethis
+Rules can be exported as JSON to your clipboard and imported back (append to existing or replace all). This makes sharing rule sets or moving between vaults easy.
 
-# Installation
+---
 
-This is in queue to be added to the Obsidian Community plugins page. It will hopefully be added there soon!
+## Design principles
 
-In the meantime, you can install via BRAT. I used to think this was an involved process, but it's actually quite easy.
+- **Note bodies are never changed.** Only frontmatter properties are written.
+- **Everything optional except the property key.** Sane defaults cover all omitted fields.
+- **No dependencies.** Zero npm dependencies beyond the Obsidian API.
 
-1. Install BRAT & enable it
-2. In BRAT settings, click "Add Plugin"
-3. Copy & paste this repo's URL into BRATs settings
-4. Done.
+---
+
+## Installation
+
+[Listed in the Obsidian Community directory!](obsidian://show-plugin?id=auto-properties)
+
+Or install via [BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install & enable BRAT
+2. In BRAT settings, click **Add Plugin**
+3. Paste this repo's URL
+4. Done
